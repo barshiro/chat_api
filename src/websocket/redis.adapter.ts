@@ -8,7 +8,7 @@ export class RedisIoAdapter extends IoAdapter {
 
   constructor(app: any) {
     super(app);
-    const pubClient = createClient({ url: 'redis://localhost:6379' });
+    const pubClient = createClient({ url: 'redis://default:xNukaJlNeUllBgKlHtyzBRMPCApKeBzy@redis.railway.internal:6379' });
     const subClient = pubClient.duplicate();
     Promise.all([pubClient.connect(), subClient.connect()]).catch(err => {
       console.error('Redis connection error:', err);
