@@ -46,7 +46,7 @@ export class NotificationsService {
   async createNotification(
     userId: string,
     type: 'contact_request' | 'mention' | 'group_invite' | 'reaction',
-    payload: { requesterId?: string; groupId?: string; messageId?: string; content?: string },
+    payload: { requesterId?: string; groupId?: string; roleId?: string;  messageId?: string;  content?: string;},
   ) {
     const user = await this.userModel.findById(userId).exec();
     if (!user) {

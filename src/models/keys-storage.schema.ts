@@ -5,7 +5,7 @@ export const KeysStorageSchema = new Schema({
   _id: { type: String, default: () => uuidv4() },
   groupId: { type: String, required: true }, // Removed index: true
   Keys_storage: {
-    keys_sym: { type: String, required: true },
+    keys_sym: { type: String, required: false },
   },
   createdAt: { type: String, default: () => new Date().toISOString() },
 });

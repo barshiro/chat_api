@@ -8,6 +8,7 @@ export const NotificationSchema = new Schema({
   payload: {
     requesterId: { type: String },
     groupId: { type: String },
+    roleId: { type: String },
     messageId: { type: String },
     content: { type: String },
   },

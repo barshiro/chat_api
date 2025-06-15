@@ -12,7 +12,22 @@ export class UsersService {
     @InjectModel('User') private userModel: Model<any>,
     private notificationsService: NotificationsService,
   ) {}
+async getMyProfile(userId: string) {
+  const user = await this.userModel.findById(userId).exec();
+  if (!user) {
+    throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+  }
 
+  return {
+    _id: user._id,
+    Keys_storage: user.Keys_storage,
+    public: user.public,
+    settings: user.settings,
+    contacts: user.contacts,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt
+  };
+}
   async editUser(userId: string, dto: EditUserDto) {
     const user = await this.userModel.findById(userId).exec();
     if (!user) {

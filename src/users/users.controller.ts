@@ -10,6 +10,16 @@ export class UsersController {
   constructor(private usersService: UsersService) {}
 
   @UseGuards(JwtAuthGuard)
+  @Get('me')
+  async getMyProfile(@Request() req) {
+    try {
+      return await this.usersService.getMyProfile(req.user.userId);
+    } catch (error) {
+      throw new HttpException(error.message, error.status || HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Put('me')
   async editUser(@Request() req, @Body() dto: EditUserDto) {
     try {
@@ -69,13 +79,13 @@ export class UsersController {
     }
   }
 
-   @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
-   async getUser(@Request() req, @Param('id') id: string) {
-     try {
-       return await this.usersService.getUserById(id, req.user.userId);
-     } catch (error) {
-       throw new HttpException(error.message, error.status || HttpStatus.BAD_REQUEST);
+  async getUser(@Request() req, @Param('id') id: string) {
+    try {
+      return await this.usersService.getUserById(id, req.user.userId);
+    } catch (error) {
+      throw new HttpException(error.message, error.status || HttpStatus.BAD_REQUEST);
     }
-   }
+  }
 }

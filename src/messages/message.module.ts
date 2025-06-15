@@ -1,31 +1,30 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { GroupsService } from './groups.service';
-import { GroupsController } from './groups.controller';
+import { MessagesService } from './message.service';
+import { MessagesController } from './message.controller';
+import { MessageSchema } from '../models/message.schema';
+import { ReactionSchema } from '../models/reaction.schema';
 import { GroupSchema } from '../models/group.schema';
 import { GroupMembersSchema } from '../models/group-members.schema';
 import { RolesSchema } from '../models/roles.schema';
-import { KeysStorageSchema } from '../models/keys-storage.schema';
 import { UserSchema } from '../models/user.schema';
-import { NotificationSchema } from '../models/notification.schema';
 import { NotificationsModule } from '../notifications/notifications.module';
-import { UsersModule } from '../users/users.module';
+import { WebSocketsModule } from '../websocket/websocket.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
+      { name: 'Message', schema: MessageSchema },
+      { name: 'Reaction', schema: ReactionSchema },
       { name: 'Group', schema: GroupSchema },
       { name: 'GroupMembers', schema: GroupMembersSchema },
       { name: 'Roles', schema: RolesSchema },
-      { name: 'KeysStorage', schema: KeysStorageSchema },
       { name: 'User', schema: UserSchema },
-      { name: 'Notification', schema: NotificationSchema }, // Добавляем Notification
     ]),
     NotificationsModule,
-    UsersModule,
+    WebSocketsModule,
   ],
-  controllers: [GroupsController],
-  providers: [GroupsService],
-  exports: [GroupsService],
+  controllers: [MessagesController],
+  providers: [MessagesService],
 })
-export class GroupsModule {}
+export class MessagesModule {}

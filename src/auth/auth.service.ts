@@ -12,6 +12,7 @@ export class AuthService {
     @InjectModel('User') private userModel: Model<any>,
     private jwtService: JwtService,
   ) {}
+  
 
   async register(dto: RegisterDto) {
     const { email, password, username, displayName, birthDate, publicKey } = dto;

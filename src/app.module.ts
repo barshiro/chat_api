@@ -9,7 +9,7 @@ import { GroupsModule } from './groups/groups.module';
 import { GroupMembersModule } from './group-members/group-members.module';
 import { RolesModule } from './roles/roles.module';
 import { NotificationsModule } from './notifications/notifications.module';
-import { WebsocketModule } from './websocket/websocket.module';
+import { WebSocketsModule } from './websocket/websocket.module';
 import { UserSchema } from './models/user.schema';
 import { GroupSchema } from './models/group.schema';
 import { NotificationSchema } from './models/notification.schema';
@@ -18,6 +18,7 @@ import { RolesSchema } from './models/roles.schema';
 import { GroupMembersSchema } from './models/group-members.schema';
 import { KeysStorageSchema } from './models/keys-storage.schema';
 import { ReactionSchema } from './models/reaction.schema';
+import { MessagesModule } from './messages/message.module';
 
 @Module({
   imports: [
@@ -45,7 +46,8 @@ import { ReactionSchema } from './models/reaction.schema';
     GroupMembersModule,
     RolesModule,
     NotificationsModule,
-    WebsocketModule,
+    WebSocketsModule,
+    MessagesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
