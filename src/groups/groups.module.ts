@@ -10,7 +10,7 @@ import { UserSchema } from '../models/user.schema';
 import { NotificationSchema } from '../models/notification.schema';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { UsersModule } from '../users/users.module';
-
+import { MessageSchema } from '../models/message.schema';
 @Module({
   imports: [
     MongooseModule.forFeature([
