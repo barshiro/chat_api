@@ -7,13 +7,13 @@ import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { WebSocketsService } from './websockets.service';
 import { JwtStrategy } from '../auth/jwt.strategy';
 
-@WebSocketGateway({ 
-  cors: { 
+@WebSocketGateway({
+  cors: {
     origin: '*',
-    credentials: true 
+    credentials: true
   },
-  pingTimeout: 10000,
-  pingInterval: 5000
+  pingTimeout: 30000,  // Более щадящие таймауты
+  pingInterval: 15000
 })
 export class WebSocketsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
@@ -35,7 +35,7 @@ export class WebSocketsGateway implements OnGatewayConnection, OnGatewayDisconne
     try {
       const token = this.extractToken(client);
       if (!token) {
-        this.disconnectWithError(client, 'No token provided', HttpStatus.UNAUTHORIZED);
+        this.sendError(client, 'No token provided', HttpStatus.UNAUTHORIZED, true);
         return;
       }
 
@@ -43,16 +43,73 @@ export class WebSocketsGateway implements OnGatewayConnection, OnGatewayDisconne
       client.data.userId = payload.userId;
 
       await this.joinUserRooms(client, payload.userId);
-
       this.logger.log(`Client connected: ${client.id}, userId: ${payload.userId}`);
     } catch (error) {
       this.logger.error(`Connection error: ${error.message}`);
-      this.disconnectWithError(client, error.message, error.status || HttpStatus.UNAUTHORIZED);
+      this.sendError(client, error.message, error.status || HttpStatus.UNAUTHORIZED, true);
     }
   }
 
   handleDisconnect(client: Socket) {
-    this.logger.log(`Client disconnected: ${client.id}`);
+    this.logger.log(`Client disconnected: ${client.id}, userId: ${client.data.userId}`);
+  }
+
+  @SubscribeMessage('joinGroup')
+  async handleJoinGroup(client: Socket, groupId: string) {
+    try {
+      const userId = client.data.userId;
+      if (!await this.validateGroupMembership(userId, groupId)) {
+        throw new HttpException('Not a group member', HttpStatus.FORBIDDEN);
+      }
+
+      this.joinRoom(client, `group:${groupId}`);
+      client.emit('joinedGroup', { groupId });
+    } catch (error) {
+      this.sendError(client, error.message, error.status || HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  @SubscribeMessage('leaveGroup')
+  handleLeaveGroup(client: Socket, groupId: string) {
+    this.leaveRoom(client, `group:${groupId}`);
+    client.emit('leftGroup', { groupId });
+  }
+
+  // ================ Вспомогательные методы ================ //
+
+  private async joinUserRooms(client: Socket, userId: string): Promise<void> {
+    try {
+      const memberships = await this.groupMembersModel.find({ userId }).exec();
+      const groupRooms = memberships.map(m => `group:${m.groupId}`);
+      
+      // Присоединяем только к новым комнатам
+      groupRooms.forEach(room => this.joinRoom(client, room));
+      this.joinRoom(client, `user:${userId}`);
+
+      this.logger.debug(`User ${userId} joined ${groupRooms.length} group rooms`);
+    } catch (error) {
+      this.logger.error(`Failed to join rooms for user ${userId}: ${error.message}`);
+      throw error;
+    }
+  }
+
+  private async validateGroupMembership(userId: string, groupId: string): Promise<boolean> {
+    const membership = await this.groupMembersModel.findOne({ userId, groupId }).exec();
+    return !!membership;
+  }
+
+  private joinRoom(client: Socket, room: string): void {
+    if (!client.rooms.has(room)) {
+      client.join(room);
+      this.logger.debug(`Client ${client.id} joined room ${room}`);
+    }
+  }
+
+  private leaveRoom(client: Socket, room: string): void {
+    if (client.rooms.has(room)) {
+      client.leave(room);
+      this.logger.debug(`Client ${client.id} left room ${room}`);
+    }
   }
 
   private extractToken(client: Socket): string | null {
@@ -69,45 +126,10 @@ export class WebSocketsGateway implements OnGatewayConnection, OnGatewayDisconne
     }
   }
 
-  private async joinUserRooms(client: Socket, userId: string): Promise<void> {
-    const memberships = await this.groupMembersModel.find({ userId }).exec();
-    memberships.forEach(membership => {
-      client.join(`group:${membership.groupId}`);
-      console.log(userId);
-    });
-    client.join(`user:${userId}`);
-  }
-
-  private disconnectWithError(client: Socket, message: string, status: HttpStatus): void {
+  private sendError(client: Socket, message: string, status: HttpStatus, disconnect = false): void {
     client.emit('error', { message, status });
-    client.disconnect(true);
-  }
-
-  @SubscribeMessage('joinGroup')
-  async handleJoinGroup(client: Socket, groupId: string) {
-    try {
-      const membership = await this.groupMembersModel.findOne({
-        groupId,
-        userId: client.data.userId
-      }).exec();
-
-      if (!membership) {
-        throw new HttpException('Not a group member', HttpStatus.FORBIDDEN);
-      }
-
-      client.join(`group:${groupId}`);
-      client.emit('joinedGroup', { groupId });
-    } catch (error) {
-      client.emit('error', { 
-        message: error.message,
-        status: error.status || HttpStatus.BAD_REQUEST
-      });
+    if (disconnect) {
+      client.disconnect(true);
     }
-  }
-
-  @SubscribeMessage('leaveGroup')
-  handleLeaveGroup(client: Socket, groupId: string) {
-    client.leave(`group:${groupId}`);
-    client.emit('leftGroup', { groupId });
   }
 }
