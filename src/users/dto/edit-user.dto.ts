@@ -2,14 +2,14 @@ import { IsString, IsNotEmpty, IsOptional, IsEnum, IsUrl, MinLength } from 'clas
 
 export class EditUserDto {
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   @MinLength(3)
-  username: string;
+  username?: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   @MinLength(3)
-  displayName: string;
+  displayName?: string;
 
   @IsString()
   @IsOptional()
