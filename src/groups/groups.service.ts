@@ -19,6 +19,7 @@ export class GroupsService {
     @InjectModel('KeysStorage') private keysStorageModel: Model<any>,
     @InjectModel('User') private userModel: Model<any>,
     @InjectModel('Notification') private notificationModel: Model<any>,
+    @InjectModel('Message') private messageModel: Model<any>,
     private notificationsService: NotificationsService,
     private usersService: UsersService,
   ) {}
