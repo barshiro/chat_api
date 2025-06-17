@@ -73,6 +73,7 @@ export class WebSocketsGateway implements OnGatewayConnection, OnGatewayDisconne
     const memberships = await this.groupMembersModel.find({ userId }).exec();
     memberships.forEach(membership => {
       client.join(`group:${membership.groupId}`);
+      console.log(userId);
     });
     client.join(`user:${userId}`);
   }
