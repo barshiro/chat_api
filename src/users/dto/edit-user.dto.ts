@@ -15,10 +15,7 @@ export class EditUserDto {
   @IsOptional()
   bio?: string;
 
-  @IsString()
-  @IsOptional()
-  @IsUrl()
-  profileLink?: string;
+
 
   @IsString()
   @IsOptional()
