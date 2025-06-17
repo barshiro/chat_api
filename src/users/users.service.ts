@@ -53,6 +53,7 @@ export class UsersService {
         error.status || HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
+  }
 async getMyProfile(userId: string) {
   const user = await this.userModel.findById(userId).exec();
   if (!user) {
