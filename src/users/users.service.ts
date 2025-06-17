@@ -28,59 +28,57 @@ async getMyProfile(userId: string) {
     updatedAt: user.updatedAt
   };
 }
-  async editUser(userId: string, dto: EditUserDto) {
-    const user = await this.userModel.findById(userId).exec();
-    if (!user) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    }
-
-    // Check username uniqueness
-    if (dto.username && dto.username !== user.public.username) {
-      const existing = await this.userModel
-        .findOne({ 'public.username': dto.username })
-        .exec();
-      if (existing) {
-        throw new HttpException('Username already exists', HttpStatus.BAD_REQUEST);
-      }
-    }
-
-    // Update public fields
-    user.public.username = dto.username || user.public.username;
-    user.public.displayName = dto.displayName || user.public.displayName;
-    user.public.bio = dto.bio !== undefined ? dto.bio : user.public.bio;
-    user.public.profileLink = dto.profileLink !== undefined ? dto.profileLink : user.public.profileLink;
-    user.public.birthDate = dto.birthDate !== undefined ? dto.birthDate : user.public.birthDate;
-    user.public.avatar = dto.avatar !== undefined ? dto.avatar : user.public.avatar;
-
-    // Update settings
-    if (dto.settings) {
-      if (dto.settings.notifications) {
-        user.settings.notifications = {
-          ...user.settings.notifications,
-          ...dto.settings.notifications,
-        };
-      }
-      if (dto.settings.privacy) {
-        user.settings.privacy = {
-          ...user.settings.privacy,
-          ...dto.settings.privacy,
-        };
-      }
-      if (dto.settings.theme) {
-        user.settings.theme = dto.settings.theme;
-      }
-    }
-
-    user.updatedAt = new Date().toISOString();
-    await user.save();
-
-    return {
-      _id: user._id,
-      public: user.public,
-      settings: user.settings,
-    };
+ async editUser(userId: string, dto: EditUserDto) {
+  const user = await this.userModel.findById(userId).exec();
+  if (!user) {
+    throw new HttpException('User not found', HttpStatus.NOT_FOUND);
   }
 
+  // Check username uniqueness
+  if (dto.username && dto.username !== user.public.username) {
+    const existing = await this.userModel
+      .findOne({ 'public.username': dto.username })
+      .exec();
+    if (existing) {
+      throw new HttpException('Username already exists', HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  // Update public fields
+  user.public.username = dto.username || user.public.username;
+  user.public.displayName = dto.displayName || user.public.displayName;
+  user.public.bio = dto.bio !== undefined ? dto.bio : user.public.bio;
+  user.public.birthDate = dto.birthDate !== undefined ? dto.birthDate : user.public.birthDate;
+  user.public.avatar = dto.avatar !== undefined ? dto.avatar : user.public.avatar;
+
+  // Update settings
+  if (dto.settings) {
+    if (dto.settings.notifications) {
+      user.settings.notifications = {
+        ...user.settings.notifications,
+        ...dto.settings.notifications,
+      };
+    }
+    if (dto.settings.privacy) {
+      user.settings.privacy = {
+        ...user.settings.privacy,
+        ...dto.settings.privacy,
+      };
+    }
+    if (dto.settings.theme) {
+      user.settings.theme = dto.settings.theme;
+    }
+  }
+
+  user.updatedAt = new Date().toISOString();
+  await user.save();
+
+  return {
+    _id: user._id,
+    public: user.public,
+    settings: user.settings,
+  };
+}
   async getUserById(userId: string, requesterId: string) {
     const user = await this.userModel.findById(userId).exec();
     if (!user) {
