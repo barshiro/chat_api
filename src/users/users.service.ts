@@ -10,8 +10,49 @@ import { NotificationsService } from '../notifications/notifications.service';
 export class UsersService {
   constructor(
     @InjectModel('User') private userModel: Model<any>,
+    @InjectModel('Group') private groupModel: Model<any>,
+    @InjectModel('GroupMembers') private groupMembersModel: Model<any>,
     private notificationsService: NotificationsService,
   ) {}
+  async getUserGroups(userId: string) {
+    try {
+      // Находим все членства пользователя в группах
+      const memberships = await this.groupMembersModel
+        .find({ userId })
+        .select('groupId roles joinedAt')
+        .exec();
+
+      if (!memberships || memberships.length === 0) {
+        return [];
+      }
+
+      // Получаем информацию о группах
+      const groupIds = memberships.map(m => m.groupId);
+      const groups = await this.groupModel
+        .find({ _id: { $in: groupIds } })
+        .select('payload.name payload.type payload.avatar payload.createdAt payload.createdBy')
+        .exec();
+
+      // Объединяем данные
+      return groups.map(group => {
+        const membership = memberships.find(m => m.groupId === group._id);
+        return {
+          id: group._id,
+          name: group.payload.name,
+          type: group.payload.type,
+          avatar: group.payload.avatar,
+          createdAt: group.payload.createdAt,
+          isCreator: group.payload.createdBy === userId,
+          roles: membership?.roles || [],
+          joinedAt: membership?.joinedAt
+        };
+      });
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to get user groups',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
 async getMyProfile(userId: string) {
   const user = await this.userModel.findById(userId).exec();
   if (!user) {
