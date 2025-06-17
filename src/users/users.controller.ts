@@ -18,15 +18,7 @@ export class UsersController {
       throw new HttpException(error.message, error.status || HttpStatus.BAD_REQUEST);
     }
   }
-@UseGuards(JwtAuthGuard)
-@Get('me/groups')
-async getUserGroups(@Request() req) {
-  try {
-    return await this.usersService.getUserGroups(req.user.userId);
-  } catch (error) {
-    throw new HttpException(error.message, error.status || HttpStatus.BAD_REQUEST);
-  }
-}
+
   @UseGuards(JwtAuthGuard)
   @Put('me')
   async editUser(@Request() req, @Body() dto: EditUserDto) {
