@@ -22,7 +22,36 @@ export class GroupsService {
     private notificationsService: NotificationsService,
     private usersService: UsersService,
   ) {}
+async getGroupMessages(groupId: string, userId: string, page = 1, limit = 50) {
+  // Проверяем, является ли пользователь участником группы
+  const membership = await this.groupMembersModel.findOne({ groupId, userId }).exec();
+  if (!membership) {
+    throw new HttpException('Вы не являетесь участником группы', HttpStatus.FORBIDDEN);
+  }
 
+  // Получаем сообщения с пагинацией
+  const messages = await this.messageModel
+    .find({ groupId })
+    .sort({ createdAt: -1 })
+    .skip((page - 1) * limit)
+    .limit(limit)
+    .populate('senderId', 'public.username public.displayName public.avatar')
+    .exec();
+
+  return {
+    messages,
+    pagination: {
+      currentPage: page,
+      itemsPerPage: limit,
+      totalItems: await this.messageModel.countDocuments({ groupId }),
+      totalPages: Math.ceil(await this.messageModel.countDocuments({ groupId }) / limit),
+    }
+  };
+}
+
+
+
+  
   async createGroup(userId: string, dto: CreateGroupDto) {
     const user = await this.userModel.findById(userId).exec();
     if (!user) {
