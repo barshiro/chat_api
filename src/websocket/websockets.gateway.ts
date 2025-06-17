@@ -5,6 +5,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { WebSocketsService } from './websockets.service';
+import { JwtStrategy } from '../auth/jwt.strategy';
 
 @WebSocketGateway({ cors: { origin: '*' } })
 export class WebSocketsGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -13,6 +14,7 @@ export class WebSocketsGateway implements OnGatewayConnection, OnGatewayDisconne
   constructor(
     private jwtService: JwtService,
     private webSocketsService: WebSocketsService,
+    private jwtStrategy: JwtStrategy,
     @InjectModel('GroupMembers') private groupMembersModel: Model<any>,
   ) {}
 
@@ -20,7 +22,7 @@ export class WebSocketsGateway implements OnGatewayConnection, OnGatewayDisconne
     this.webSocketsService.setServer(this.server);
   }
 
-  async handleConnection(client: Socket) {
+ async handleConnection(client: Socket) {
     try {
       const token = client.handshake.auth.token?.replace('Bearer ', '');
       if (!token) {
@@ -28,13 +30,17 @@ export class WebSocketsGateway implements OnGatewayConnection, OnGatewayDisconne
         return;
       }
 
-      const payload = this.jwtService.verify(token);
+      // Используем JwtStrategy для валидации токена
+      const payload = await this.jwtStrategy.validate(
+        await this.jwtService.verify(token)
+      );
+      
       client.data.userId = payload.userId;
 
       const memberships = await this.groupMembersModel.find({ userId: payload.userId }).exec();
       for (const membership of memberships) {
         client.join(`group:${membership.groupId}`);
-        client.join(`user:${payload.userId}`); // Для персональных уведомлений
+        client.join(`user:${payload.userId}`);
       }
 
       console.log(`Client connected: ${client.id}, userId: ${payload.userId}`);
