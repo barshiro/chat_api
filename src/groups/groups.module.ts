@@ -19,7 +19,8 @@ import { UsersModule } from '../users/users.module';
       { name: 'Roles', schema: RolesSchema },
       { name: 'KeysStorage', schema: KeysStorageSchema },
       { name: 'User', schema: UserSchema },
-      { name: 'Notification', schema: NotificationSchema }, // Добавляем Notification
+      { name: 'Notification', schema: NotificationSchema },
+       { name: 'Message', schema: MessageSchema },// Добавляем Notification
     ]),
     NotificationsModule,
     UsersModule,
