@@ -20,7 +20,20 @@ export class GroupsController {
       throw new HttpException(error.message, error.status || HttpStatus.BAD_REQUEST);
     }
   }
-
+@UseGuards(JwtAuthGuard)
+@Get(':id/messages')
+async getMessages(
+  @Request() req,
+  @Param('id') groupId: string,
+  @Query('page') page: number = 1,
+  @Query('limit') limit: number = 50
+) {
+  try {
+    return await this.groupsService.getGroupMessages(groupId, req.user.userId, page, limit);
+  } catch (error) {
+    throw new HttpException(error.message, error.status || HttpStatus.BAD_REQUEST);
+  }
+}
   @UseGuards(JwtAuthGuard)
   @Post(':id/invite')
   async inviteMember(@Request() req, @Param('id') groupId: string, @Body() dto: InviteMemberDto) {
