@@ -10,7 +10,7 @@ import { JwtModule } from '@nestjs/jwt';
     MongooseModule.forFeature([{ name: 'GroupMembers', schema: GroupMembersSchema }]),
     JwtModule.register({
       secret: 'your-secret-key', // Замените на ваш секрет
-      signOptions: { expiresIn: '1d' },
+      signOptions: { expiresIn: '1h' },
     }),
   ],
   providers: [WebSocketsGateway, WebSocketsService],
