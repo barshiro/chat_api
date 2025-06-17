@@ -15,8 +15,6 @@ export class EditUserDto {
   @IsOptional()
   bio?: string;
 
-
-
   @IsString()
   @IsOptional()
   birthDate?: string;
