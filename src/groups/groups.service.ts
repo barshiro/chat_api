@@ -49,7 +49,45 @@ async getGroupMessages(groupId: string, userId: string, page = 1, limit = 50) {
     }
   };
 }
+async deleteGroup(userId: string, groupId: string) {
+  const group = await this.groupModel.findById(groupId).exec();
+  if (!group) {
+    throw new HttpException('Группа не найдена', HttpStatus.NOT_FOUND);
+  }
 
+  // Проверяем, является ли пользователь создателем группы
+  if (group.payload.createdBy !== userId) {
+    throw new HttpException('Только создатель группы может её удалить', HttpStatus.FORBIDDEN);
+  }
+
+  // Удаляем все связанные данные в транзакции
+  const session = await this.groupModel.db.startSession();
+  try {
+    await session.withTransaction(async () => {
+      // Удаляем группу
+      await this.groupModel.deleteOne({ _id: groupId }).session(session);
+      
+      // Удаляем участников группы
+      await this.groupMembersModel.deleteMany({ groupId }).session(session);
+      
+      // Удаляем роли группы
+      await this.rolesModel.deleteMany({ groupId }).session(session);
+      
+      // Удаляем ключи группы
+      await this.keysStorageModel.deleteOne({ groupId }).session(session);
+      
+      // Удаляем сообщения группы
+      await this.messageModel.deleteMany({ groupId }).session(session);
+      
+      // Удаляем уведомления, связанные с группой
+      await this.notificationModel.deleteMany({ 'payload.groupId': groupId }).session(session);
+    });
+  } finally {
+    session.endSession();
+  }
+
+  return { message: 'Группа и все связанные данные успешно удалены' };
+}
 
 
   
