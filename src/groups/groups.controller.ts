@@ -43,7 +43,15 @@ async getMessages(
       throw new HttpException(error.message, error.status || HttpStatus.BAD_REQUEST);
     }
   }
-
+@UseGuards(JwtAuthGuard)
+@Delete(':id')
+async deleteGroup(@Request() req, @Param('id') groupId: string) {
+  try {
+    return await this.groupsService.deleteGroup(req.user.userId, groupId);
+  } catch (error) {
+    throw new HttpException(error.message, error.status || HttpStatus.BAD_REQUEST);
+  }
+}
   @UseGuards(JwtAuthGuard)
   @Post(':id/join')
   async joinGroup(@Request() req, @Param('id') groupId: string, @Body() dto: JoinGroupDto) {
