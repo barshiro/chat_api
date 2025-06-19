@@ -60,31 +60,13 @@ async deleteGroup(userId: string, groupId: string) {
     throw new HttpException('Только создатель группы может её удалить', HttpStatus.FORBIDDEN);
   }
 
-  // Удаляем все связанные данные в транзакции
-  const session = await this.groupModel.db.startSession();
-  try {
-    await session.withTransaction(async () => {
-      // Удаляем группу
-      await this.groupModel.deleteOne({ _id: groupId }).session(session);
-      
-      // Удаляем участников группы
-      await this.groupMembersModel.deleteMany({ groupId }).session(session);
-      
-      // Удаляем роли группы
-      await this.rolesModel.deleteMany({ groupId }).session(session);
-      
-      // Удаляем ключи группы
-      await this.keysStorageModel.deleteOne({ groupId }).session(session);
-      
-      // Удаляем сообщения группы
-      await this.messageModel.deleteMany({ groupId }).session(session);
-      
-      // Удаляем уведомления, связанные с группой
-      await this.notificationModel.deleteMany({ 'payload.groupId': groupId }).session(session);
-    });
-  } finally {
-    session.endSession();
-  }
+  // Удаляем все связанные данные последовательно
+  await this.messageModel.deleteMany({ groupId }).exec();          // Удаляем сообщения
+  await this.notificationModel.deleteMany({ 'payload.groupId': groupId }).exec(); // Удаляем уведомления
+  await this.groupMembersModel.deleteMany({ groupId }).exec();     // Удаляем участников
+  await this.rolesModel.deleteMany({ groupId }).exec();            // Удаляем роли
+  await this.keysStorageModel.deleteOne({ groupId }).exec();       // Удаляем ключи
+  await this.groupModel.deleteOne({ _id: groupId }).exec();        // Удаляем саму группу
 
   return { message: 'Группа и все связанные данные успешно удалены' };
 }
