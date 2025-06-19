@@ -440,6 +440,25 @@ async deleteGroup(userId: string, groupId: string) {
       throw new HttpException('Группа не найдена', HttpStatus.NOT_FOUND);
     }
 
+    // Если пользователь удаляет сам себя
+    if (userId === targetUserId) {
+      const targetMembership = await this.groupMembersModel
+        .findOne({ groupId, userId: targetUserId })
+        .exec();
+      if (!targetMembership) {
+        throw new HttpException('Вы не являетесь участником группы', HttpStatus.FORBIDDEN);
+      }
+
+      // Создатель группы не может сам себя удалить
+      if (group.payload.createdBy === targetUserId) {
+        throw new HttpException('Создатель группы не может её покинуть', HttpStatus.BAD_REQUEST);
+      }
+
+      await this.groupMembersModel.deleteOne({ groupId, userId: targetUserId }).exec();
+      return { message: 'Вы вышли из группы' };
+    }
+
+    // Оригинальная логика для удаления других пользователей
     const removerMembership = await this.groupMembersModel
       .findOne({ groupId, userId })
       .populate('roles')
